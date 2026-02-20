@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarketPulse NEXUS — Neural Trading Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;600;700;900&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     AUTH OVERLAY — LOGIN / SIGNUP / FORGOT PASSWORD
+     ═══════════════════════════════════════════════════ -->
+<div id="auth-overlay">
+  <div class="auth-bg">
+    <div class="auth-orb" style="width:500px;height:500px;background:rgba(0,212,255,0.06);top:-100px;left:-100px;animation-duration:10s"></div>
+    <div class="auth-orb" style="width:400px;height:400px;background:rgba(124,58,237,0.07);bottom:-80px;right:-80px;animation-duration:13s;animation-delay:-4s"></div>
+    <div class="auth-orb" style="width:300px;height:300px;background:rgba(0,255,157,0.04);top:50%;left:60%;animation-duration:9s;animation-delay:-7s"></div>
+    <div class="auth-grid-lines"></div>
+    <canvas id="auth-neural" style="position:absolute;inset:0;opacity:0.35;pointer-events:none;"></canvas>
+  </div>
+
+  <!-- ── LOGIN ── -->
+  <div class="auth-card" id="auth-card">
+    <svg class="auth-corner tl" viewBox="0 0 100 100"><path d="M0,0 L40,0 L40,4 L4,4 L4,40 L0,40 Z" fill="#00d4ff"/></svg>
+    <svg class="auth-corner br" viewBox="0 0 100 100"><path d="M0,0 L40,0 L40,4 L4,4 L4,40 L0,40 Z" fill="#00d4ff"/></svg>
+
+    <!-- Screen: Login -->
+    <div class="auth-screen active" id="screen-login">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">
+          <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
+            <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" stroke="#00d4ff" stroke-width="1.5" fill="rgba(0,212,255,0.08)"/>
+            <circle cx="16" cy="16" r="4" fill="#00d4ff" opacity="0.9" style="filter:drop-shadow(0 0 6px #00d4ff)"/>
+          </svg>
+        </div>
+        <div>
+          <div class="auth-logo-text">NEXUS</div>
+          <div class="auth-logo-sub">MarketPulse</div>
+        </div>
+      </div>
+
+      <div class="auth-title">Welcome back</div>
+      <div class="auth-subtitle">SIGN IN TO YOUR NEURAL TRADING ACCOUNT</div>
+
+      <div class="auth-hint-row">
+        <div class="auth-hint-icon">⬡</div>
+        <div class="auth-hint-text">DEMO: use <strong style="color:#00d4ff">demo@nexus.io</strong> / <strong style="color:#00d4ff">Demo@1234</strong></div>
+      </div>
+
+      <div class="auth-error" id="login-error">
+        <span>⚠</span> <span id="login-error-msg">Invalid credentials</span>
+      </div>
+
+      <div class="auth-field">
+        <div class="auth-label">Email Address</div>
+        <div class="auth-input-wrap">
+          <input class="auth-input" id="login-email" type="email" placeholder="your@email.com"
+            oninput="clearAuthError('login-error')" autocomplete="email">
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <div class="auth-label">
+          Password
+          <a onclick="showScreen('screen-forgot')" style="cursor:pointer;color:var(--neon-azure);text-decoration:none;">Forgot password?</a>
+        </div>
+        <div class="auth-input-wrap">
+          <input class="auth-input password-input" id="login-password" type="password"
+            placeholder="Enter your password" oninput="clearAuthError('login-error')"
+            autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+          <button class="pw-toggle" onclick="togglePassword('login-password', this)" tabindex="-1" title="Show/hide password">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+        <div style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="toggleCheck('remember-check')">
+          <div class="auth-checkbox" id="remember-check">✓</div>
+          <div class="auth-checkbox-label" style="margin:0">Remember me</div>
+        </div>
+        <div style="font-family:var(--font-mono); font-size:10px; color:rgba(255,255,255,0.3);">
+          🔒 256-bit encrypted
+        </div>
+      </div>
+
+      <button class="auth-btn auth-btn-primary" id="login-btn" onclick="doLogin()">
+        SIGN IN
+      </button>
+
+      <!-- Biometric login -->
+      <div class="biometric-row" onclick="doBiometricLogin()">
+        <span class="biometric-icon">⬡</span>
+        <span>Sign in with Face ID / Fingerprint</span>
+        <span class="biometric-icon">☝</span>
+      </div>
+
+      <div class="auth-divider">
+        <div class="auth-divider-line"></div>
+        <div class="auth-divider-text">OR CONTINUE WITH</div>
+        <div class="auth-divider-line"></div>
+      </div>
+
+      <div class="social-btn-row">
+        <button class="social-btn-sm" onclick="doSocialLogin('Google')">
+          <span>🌐</span> Google
+        </button>
+        <button class="social-btn-sm" onclick="doSocialLogin('Apple')">
+          <span>🍎</span> Apple
+        </button>
+        <button class="social-btn-sm" onclick="doSocialLogin('MetaMask')">
+          <span>🦊</span> MetaMask
+        </button>
+      </div>
+
+      <div class="auth-footer">
+        Don't have an account? <span onclick="showScreen('screen-signup')">Create one →</span>
+      </div>
+    </div>
+
+    <!-- Screen: Sign Up -->
+    <div class="auth-screen" id="screen-signup">
+      <!-- Step progress -->
+      <div class="step-progress">
+        <div class="step-prog-item">
+          <div class="step-prog-dot active" id="spd-1">1</div>
+        </div>
+        <div class="step-prog-line" id="spl-1"></div>
+        <div class="step-prog-item">
+          <div class="step-prog-dot" id="spd-2">2</div>
+        </div>
+        <div class="step-prog-line" id="spl-2"></div>
+        <div class="step-prog-item">
+          <div class="step-prog-dot" id="spd-3">3</div>
+        </div>
+      </div>
+
+      <div class="auth-title">Create account</div>
+      <div class="auth-subtitle">JOIN THE NEURAL TRADING NETWORK</div>
+
+      <!-- Step 1: Identity -->
+      <div id="signup-step-1">
+        <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; color:rgba(255,255,255,0.35); text-align:center; margin-bottom:14px; text-transform:uppercase;">Choose your avatar</div>
+        <div class="avatar-selector" id="avatar-selector">
+          <div class="avatar-opt selected" onclick="selectAvatar(this, '🦅')">🦅</div>
+          <div class="avatar-opt" onclick="selectAvatar(this, '🐉')">🐉</div>
+          <div class="avatar-opt" onclick="selectAvatar(this, '🤖')">🤖</div>
+          <div class="avatar-opt" onclick="selectAvatar(this, '👾')">👾</div>
+          <div class="avatar-opt" onclick="selectAvatar(this, '🦊')">🦊</div>
+          <div class="avatar-opt" onclick="selectAvatar(this, '⚡')">⚡</div>
+          <div class="avatar-opt" onclick="selectAvatar(this, '🌙')">🌙</div>
+          <div class="avatar-opt" onclick="selectAvatar(this, '💎')">💎</div>
+        </div>
+
+        <div class="auth-error" id="signup-error">
+          <span>⚠</span> <span id="signup-error-msg">Please fill all fields</span>
+        </div>
+
+        <div class="auth-field">
+          <div class="auth-label">Full Name</div>
+          <input class="auth-input" id="signup-name" type="text" placeholder="Your full name"
+            oninput="clearAuthError('signup-error')">
+        </div>
+        <div class="auth-field">
+          <div class="auth-label">Email Address</div>
+          <input class="auth-input" id="signup-email" type="email" placeholder="your@email.com"
+            oninput="clearAuthError('signup-error')">
+        </div>
+        <button class="auth-btn auth-btn-primary" onclick="signupNextStep(1)">CONTINUE →</button>
+      </div>
+
+      <!-- Step 2: Password -->
+      <div id="signup-step-2" style="display:none;">
+        <div class="auth-field">
+          <div class="auth-label">Password</div>
+          <div class="auth-input-wrap">
+            <input class="auth-input password-input" id="signup-password" type="password"
+              placeholder="Create a strong password" oninput="checkPasswordStrength(this.value)"
+              autocomplete="new-password">
+            <button class="pw-toggle" onclick="togglePassword('signup-password', this)" tabindex="-1" title="Show/hide password">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <div id="pw-strength-wrap" style="display:none; margin-top:10px;">
+            <div class="pw-strength">
+              <div class="pw-strength-bar"><div class="pw-strength-fill" id="pw-strength-fill"></div></div>
+              <div class="pw-strength-text" id="pw-strength-text"></div>
+            </div>
+            <div class="auth-strength-tips">
+              <div class="strength-tip" id="req-length"><div class="strength-tip-dot"></div>At least 8 characters</div>
+              <div class="strength-tip" id="req-upper"><div class="strength-tip-dot"></div>One uppercase letter (A–Z)</div>
+              <div class="strength-tip" id="req-num"><div class="strength-tip-dot"></div>One number (0–9)</div>
+              <div class="strength-tip" id="req-special"><div class="strength-tip-dot"></div>One special character (!@#$...)</div>
+            </div>
+          </div>
+        </div>
+        <div class="auth-field">
+          <div class="auth-label">Confirm Password</div>
+          <div class="auth-input-wrap">
+            <input class="auth-input password-input" id="signup-confirm" type="password"
+              placeholder="Repeat your password" oninput="checkConfirmMatch()"
+              autocomplete="new-password">
+            <button class="pw-toggle" onclick="togglePassword('signup-confirm', this)" tabindex="-1" title="Show/hide password">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <div id="confirm-match-hint" style="font-family:var(--font-mono); font-size:10px; margin-top:6px; display:none;"></div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="auth-btn auth-btn-ghost" style="flex:1;" onclick="signupGoBack(1)">← BACK</button>
+          <button class="auth-btn auth-btn-primary" style="flex:2;" onclick="signupNextStep(2)">CONTINUE →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Finalize -->
+      <div id="signup-step-3" style="display:none;">
+        <div class="terms-row">
+          <div class="auth-checkbox" id="terms-check" onclick="toggleCheck('terms-check')">✓</div>
+          <div class="terms-text">
+            I agree to the <a href="#" onclick="return false;" style="color:var(--neon-azure)">Terms of Service</a> and <a href="#" onclick="return false;" style="color:var(--neon-azure)">Privacy Policy</a>.
+            I understand trading crypto carries risk.
+          </div>
+        </div>
+        <div class="terms-row" style="margin-top:10px;">
+          <div class="auth-checkbox" id="news-check" onclick="toggleCheck('news-check')">✓</div>
+          <div class="terms-text">Send me market alerts and neural intelligence reports</div>
+        </div>
+        <div style="margin: 18px 0; padding: 14px; background: rgba(0,212,255,0.04); border: 1px solid rgba(0,212,255,0.1); border-radius: var(--radius-sm);">
+          <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; color:rgba(255,255,255,0.35); text-transform:uppercase; margin-bottom:10px;">Account Summary</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div id="summary-avatar" style="font-size:28px;">🦅</div>
+            <div>
+              <div id="summary-name" style="font-weight:600; color:#fff; font-size:14px;"></div>
+              <div id="summary-email" style="font-family:var(--font-mono); font-size:11px; color:rgba(255,255,255,0.4);"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="auth-btn auth-btn-ghost" style="flex:1;" onclick="signupGoBack(2)">← BACK</button>
+          <button class="auth-btn auth-btn-primary" style="flex:2;" onclick="doSignup()">CREATE ACCOUNT</button>
+        </div>
+        <div class="auth-divider">
+          <div class="auth-divider-line"></div>
+          <div class="auth-divider-text">OR</div>
+          <div class="auth-divider-line"></div>
+        </div>
+        <div class="social-btn-row">
+          <button class="social-btn-sm" onclick="doSocialLogin('Google')"><span>🌐</span> Google</button>
+          <button class="social-btn-sm" onclick="doSocialLogin('Apple')"><span>🍎</span> Apple</button>
+        </div>
+      </div>
+
+      <div class="auth-footer" style="margin-top:16px;">
+        Already have an account? <span onclick="showScreen('screen-login')">Sign in →</span>
+      </div>
+    </div>
+
+    <!-- Screen: Forgot Password — Email Entry -->
+    <div class="auth-screen" id="screen-forgot">
+      <div style="margin-bottom:28px; cursor:pointer; display:inline-flex; align-items:center; gap:8px;
+        font-family:var(--font-mono); font-size:11px; color:rgba(255,255,255,0.4);"
+        onclick="showScreen('screen-login')">
+        ← Back to login
+      </div>
+
+      <div class="auth-title">Reset password</div>
+      <div class="auth-subtitle">ENTER YOUR EMAIL TO RECEIVE A RECOVERY CODE</div>
+
+      <div class="auth-hint-row">
+        <div class="auth-hint-icon">📡</div>
+        <div class="auth-hint-text">A 6-digit verification code will be sent to your email address via secure channel.</div>
+      </div>
+
+      <div class="auth-field">
+        <div class="auth-label">Email Address</div>
+        <input class="auth-input" id="forgot-email" type="email" placeholder="your@email.com"
+          onkeydown="if(event.key==='Enter')sendResetCode()">
+      </div>
+
+      <button class="auth-btn auth-btn-primary" onclick="sendResetCode()">SEND RECOVERY CODE</button>
+      <button class="auth-btn auth-btn-ghost" onclick="showScreen('screen-login')">CANCEL</button>
+    </div>
+
+    <!-- Screen: OTP Verification -->
+    <div class="auth-screen" id="screen-otp">
+      <div style="margin-bottom:28px; cursor:pointer; display:inline-flex; align-items:center; gap:8px;
+        font-family:var(--font-mono); font-size:11px; color:rgba(255,255,255,0.4);"
+        onclick="showScreen('screen-forgot')">
+        ← Change email
+      </div>
+
+      <div class="auth-title">Check your email</div>
+      <div class="auth-subtitle" id="otp-subtitle">CODE SENT TO YOUR@EMAIL.COM</div>
+
+      <!-- Visual OTP display -->
+      <div class="otp-display" id="otp-display"></div>
+
+      <div style="font-family:var(--font-mono); font-size:11px; color:rgba(255,255,255,0.35); text-align:center; margin-bottom:16px; letter-spacing:0.06em;">
+        ENTER THE CODE BELOW
+      </div>
+
+      <!-- OTP input boxes -->
+      <div class="otp-input-row" id="otp-input-row"></div>
+
+      <div class="auth-error" id="otp-error">
+        <span>⚠</span> <span id="otp-error-msg">Incorrect code</span>
+      </div>
+
+      <button class="auth-btn auth-btn-primary" onclick="verifyOTP()">VERIFY CODE</button>
+
+      <div class="resend-timer">
+        Didn't receive? <span id="resend-btn" onclick="resendCode()">Resend code</span>
+        <span id="resend-countdown" style="display:none"> in <span id="resend-seconds">60</span>s</span>
+      </div>
+    </div>
+
+    <!-- Screen: New Password -->
+    <div class="auth-screen" id="screen-newpass">
+      <div class="auth-title">New password</div>
+      <div class="auth-subtitle">SET A STRONG NEW PASSWORD FOR YOUR ACCOUNT</div>
+
+      <div class="auth-field">
+        <div class="auth-label">New Password</div>
+        <div class="auth-input-wrap">
+          <input class="auth-input password-input" id="new-password" type="password"
+            placeholder="Create new password" oninput="checkPasswordStrength(this.value, 'new')">
+          <button class="pw-toggle" onclick="togglePassword('new-password', this)" tabindex="-1">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        <div class="pw-strength">
+          <div class="pw-strength-bar"><div class="pw-strength-fill" id="new-strength-fill"></div></div>
+          <div class="pw-strength-text" id="new-strength-text"></div>
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <div class="auth-label">Confirm New Password</div>
+        <div class="auth-input-wrap">
+          <input class="auth-input password-input" id="new-confirm" type="password" placeholder="Repeat new password">
+          <button class="pw-toggle" onclick="togglePassword('new-confirm', this)" tabindex="-1">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="auth-btn auth-btn-primary" onclick="doPasswordReset()">RESET PASSWORD</button>
+    </div>
+
+    <!-- Screen: Success -->
+    <div class="auth-screen" id="screen-success">
+      <div style="text-align:center; padding: 20px 0;">
+        <div style="position:relative; display:inline-block; margin-bottom:24px;">
+          <div style="font-size:72px; line-height:1; filter:drop-shadow(0 0 20px rgba(0,255,157,0.6));" id="success-icon">✦</div>
+          <div class="success-glow-ring"></div>
+          <div class="success-glow-ring2"></div>
+        </div>
+        <div class="auth-title" id="success-title" style="margin-bottom:10px; color:var(--neon-lime);">Success!</div>
+        <div class="auth-subtitle" id="success-msg" style="margin-bottom:32px; color:rgba(255,255,255,0.5);">YOUR ACCOUNT IS READY</div>
+        <div style="font-family:var(--font-mono); font-size:11px; color:rgba(255,255,255,0.3); margin-bottom:24px; letter-spacing:0.08em;">
+          <span id="success-auto-msg">ENTERING IN 3 SECONDS...</span>
+        </div>
+        <button class="auth-btn auth-btn-primary" onclick="enterApp()">ENTER NEXUS →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Cursor -->
+<div id="cursor-ring"></div>
+<div id="cursor-dot"></div>
+
+<!-- Neural Background -->
+<canvas id="neural-canvas"></canvas>
+
+<!-- Ticker -->
+<div class="ticker-wrap">
+  <div class="ticker-label">⬢ LIVE</div>
+  <div class="ticker-track">
+    <div class="ticker-inner" id="ticker-inner"></div>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <svg viewBox="0 0 32 32" fill="none">
+      <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" stroke="#00d4ff" stroke-width="1.5" fill="rgba(0,212,255,0.06)"/>
+      <polygon points="16,8 24,12 24,20 16,24 8,20 8,12" stroke="#7c3aed" stroke-width="1" fill="rgba(124,58,237,0.08)"/>
+      <circle cx="16" cy="16" r="3" fill="#00d4ff" opacity="0.9"/>
+      <line x1="16" y1="2" x2="16" y2="8" stroke="#00d4ff" stroke-width="1"/>
+      <line x1="30" y1="9" x2="24" y2="12" stroke="#00d4ff" stroke-width="1"/>
+      <line x1="30" y1="23" x2="24" y2="20" stroke="#00d4ff" stroke-width="1"/>
+      <line x1="16" y1="30" x2="16" y2="24" stroke="#00d4ff" stroke-width="1"/>
+      <line x1="2" y1="23" x2="8" y2="20" stroke="#00d4ff" stroke-width="1"/>
+      <line x1="2" y1="9" x2="8" y2="12" stroke="#00d4ff" stroke-width="1"/>
+    </svg>
+  </div>
+  <div style="margin-top: 36px;"></div>
+  <div class="sidebar-divider"></div>
+
+  <button class="nav-btn active" onclick="showPage('dashboard')" id="nav-dashboard">
+    <span>⬡</span>
+    <div class="nav-tooltip">Dashboard</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('markets')" id="nav-markets">
+    <span>◈</span>
+    <div class="nav-tooltip">Markets</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('portfolio')" id="nav-portfolio">
+    <span>◉</span>
+    <div class="nav-tooltip">Portfolio</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('trade')" id="nav-trade">
+    <span>⇅</span>
+    <div class="nav-tooltip">Trade</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('watchlist')" id="nav-watchlist">
+    <span>★</span>
+    <div class="nav-tooltip">Watchlist</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('converter')" id="nav-converter">
+    <span>⇌</span>
+    <div class="nav-tooltip">Converter</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('news')" id="nav-news">
+    <span>◎</span>
+    <div class="nav-tooltip">News Feed</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('history')" id="nav-history">
+    <span>◷</span>
+    <div class="nav-tooltip">History</div>
+  </button>
+
+  <div class="sidebar-divider"></div>
+  <button class="nav-btn" onclick="showPage('settings')" id="nav-settings">
+    <span>⊛</span>
+    <div class="nav-tooltip">Settings</div>
+  </button>
+
+  <div class="sidebar-spacer"></div>
+  <div class="sidebar-avatar" id="sidebar-avatar-btn" title="Account" onclick="toggleAccountDropdown()">🦅</div>
+</nav>
+
+<!-- Account Dropdown -->
+<div class="account-dropdown" id="account-dropdown">
+  <div class="account-header">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+      <div style="font-size:28px;" id="acc-avatar-display">🦅</div>
+      <div>
+        <div class="account-name" id="acc-name-display">Nexus Trader</div>
+        <div class="account-email" id="acc-email-display">demo@nexus.io</div>
+      </div>
+    </div>
+    <div class="account-tier">★ PRO TRADER</div>
+  </div>
+  <div class="account-menu-item" onclick="showPage('settings'); closeAccountDropdown()">
+    <span>⊛</span> Settings
+  </div>
+  <div class="account-menu-item" onclick="showPage('portfolio'); closeAccountDropdown()">
+    <span>◉</span> My Portfolio
+  </div>
+  <div class="account-menu-item" onclick="toggleAccountDropdown()">
+    <span>🔐</span> Two-Factor Auth
+    <span class="twofa-badge off" id="twofa-status-badge">OFF</span>
+  </div>
+  <div class="account-menu-item" onclick="toggleTheme(); closeAccountDropdown()">
+    <span>◑</span> Toggle Theme
+  </div>
+  <div class="account-menu-divider"></div>
+  <div class="account-menu-item danger" onclick="doLogout()">
+    <span>⬡</span> Sign Out
+  </div>
+</div>
+
+<!-- Main Content -->
+<main class="main-content">
+
+  <!-- ═══════════════ DASHBOARD ═══════════════ -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div>
+        <div class="page-title">
+          <div class="title-accent"></div>
+          NEXUS DASHBOARD
+        </div>
+        <div class="page-subtitle">NEURAL MARKET INTELLIGENCE // REAL-TIME SYNC</div>
+      </div>
+      <div class="header-actions">
+        <div class="live-indicator">
+          <div class="live-dot"></div>LIVE
+        </div>
+        <button class="btn btn-ghost" onclick="refreshData()">↻ REFRESH</button>
+        <button class="btn btn-ghost" id="notif-btn" onclick="toggleNotifPanel()" style="position:relative">
+          🔔
+          <span id="notif-badge" style="position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--neon-rose);box-shadow:0 0 6px var(--neon-rose);"></span>
+        </button>
+        <button class="btn btn-primary" onclick="openQuickTrade()">⚡ QUICK TRADE</button>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stat-grid">
+      <div class="card stat-card fade-up">
+        <div class="corner-glow" style="background: var(--neon-azure);"></div>
+        <div class="stat-label">PORTFOLIO VALUE</div>
+        <div class="stat-value" id="stat-portfolio">$84,219</div>
+        <span class="stat-change up">▲ +4.82%</span>
+        <div class="stat-sparkline">
+          <svg width="100%" height="32" viewBox="0 0 120 32" preserveAspectRatio="none">
+            <polyline points="0,28 15,22 30,25 45,14 60,18 75,8 90,12 105,4 120,7"
+              fill="none" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round"
+              style="filter: drop-shadow(0 0 4px #00d4ff88)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card stat-card fade-up delay-1">
+        <div class="corner-glow" style="background: var(--neon-lime);"></div>
+        <div class="stat-label">24H PROFIT/LOSS</div>
+        <div class="stat-value text-up" id="stat-pnl">+$3,847</div>
+        <span class="stat-change up">▲ +4.79%</span>
+        <div class="stat-sparkline">
+          <svg width="100%" height="32" viewBox="0 0 120 32" preserveAspectRatio="none">
+            <polyline points="0,26 15,20 30,16 45,18 60,10 75,14 90,6 105,9 120,3"
+              fill="none" stroke="#00ff9d" stroke-width="1.5" stroke-linecap="round"
+              style="filter: drop-shadow(0 0 4px #00ff9d88)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card stat-card fade-up delay-2">
+        <div class="corner-glow" style="background: var(--neon-violet);"></div>
+        <div class="stat-label">TOTAL TRADES</div>
+        <div class="stat-value">2,841</div>
+        <span class="stat-change up">▲ +12 today</span>
+        <div class="stat-sparkline">
+          <svg width="100%" height="32" viewBox="0 0 120 32" preserveAspectRatio="none">
+            <polyline points="0,20 10,16 20,18 30,12 40,14 50,8 60,10 70,6 80,8 90,4 100,6 120,2"
+              fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"
+              style="filter: drop-shadow(0 0 4px #7c3aed88)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card stat-card fade-up delay-3">
+        <div class="corner-glow" style="background: var(--neon-amber);"></div>
+        <div class="stat-label">WIN RATE</div>
+        <div class="stat-value">68.4%</div>
+        <span class="stat-change up">▲ +2.1%</span>
+        <div class="stat-sparkline">
+          <svg width="100%" height="32" viewBox="0 0 120 32" preserveAspectRatio="none">
+            <polyline points="0,22 15,18 30,20 45,15 60,17 75,11 90,13 105,8 120,6"
+              fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"
+              style="filter: drop-shadow(0 0 4px #f59e0b88)"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart + Order Book -->
+    <div class="chart-grid">
+      <div class="card chart-card fade-up delay-2">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">
+              ⬢ BTC / USDT
+              <div class="live-indicator"><div class="live-dot"></div>LIVE</div>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 4px;">
+              BITCOIN · NEURAL ANALYSIS ACTIVE
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <div class="chart-tabs">
+              <button class="chart-tab active" onclick="switchChartRange('1H', this)">1H</button>
+              <button class="chart-tab" onclick="switchChartRange('4H', this)">4H</button>
+              <button class="chart-tab" onclick="switchChartRange('1D', this)">1D</button>
+              <button class="chart-tab" onclick="switchChartRange('1W', this)">1W</button>
+              <button class="chart-tab" onclick="switchChartRange('1M', this)">1M</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="position: relative;">
+          <svg class="nexus-chart" height="240" id="main-chart" viewBox="0 0 600 240" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.4"/>
+                <stop offset="60%" stop-color="#7c3aed" stop-opacity="0.1"/>
+                <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+              </linearGradient>
+              <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#7c3aed"/>
+                <stop offset="50%" stop-color="#00d4ff"/>
+                <stop offset="100%" stop-color="#00ff9d"/>
+              </linearGradient>
+            </defs>
+            <!-- Grid Lines -->
+            <line x1="0" y1="48" x2="600" y2="48" class="chart-grid-line"/>
+            <line x1="0" y1="96" x2="600" y2="96" class="chart-grid-line"/>
+            <line x1="0" y1="144" x2="600" y2="144" class="chart-grid-line"/>
+            <line x1="0" y1="192" x2="600" y2="192" class="chart-grid-line"/>
+            <!-- Price labels -->
+            <text x="4" y="44" class="chart-price-label">$68.4K</text>
+            <text x="4" y="92" class="chart-price-label">$67.8K</text>
+            <text x="4" y="140" class="chart-price-label">$67.2K</text>
+            <text x="4" y="188" class="chart-price-label">$66.6K</text>
+            <!-- Area fill -->
+            <path id="chart-area" class="chart-area-fill"/>
+            <!-- Glow line -->
+            <path id="chart-glow" class="chart-glow-line"/>
+            <!-- Main line -->
+            <path id="chart-path" class="chart-line"/>
+            <!-- Cursor -->
+            <line id="cursor-vline" x1="0" y1="0" x2="0" y2="240" class="chart-cursor-line"/>
+            <circle id="cursor-circle" r="5" class="chart-crosshair-dot"/>
+          </svg>
+          <div class="chart-tooltip" id="chart-tooltip">
+            <div id="tooltip-price" style="color: var(--neon-azure); font-weight: 700; font-size: 14px;"></div>
+            <div id="tooltip-time" style="color: rgba(255,255,255,0.4); font-size: 10px; margin-top: 2px;"></div>
+          </div>
+        </div>
+
+        <!-- Chart footer stats -->
+        <div style="display: flex; gap: 24px; margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(0,212,255,0.06);">
+          <div>
+            <div style="font-family: var(--font-mono); font-size: 9px; color: rgba(255,255,255,0.35); letter-spacing: 0.1em; margin-bottom: 4px;">CURRENT</div>
+            <div style="font-family: var(--font-display); font-size: 20px; font-weight: 700; color: #fff;" id="btc-price">$67,842</div>
+          </div>
+          <div>
+            <div style="font-family: var(--font-mono); font-size: 9px; color: rgba(255,255,255,0.35); letter-spacing: 0.1em; margin-bottom: 4px;">24H RANGE</div>
+            <div style="font-family: var(--font-mono); font-size: 13px; color: rgba(255,255,255,0.7);">$65,412 — $68,921</div>
+          </div>
+          <div>
+            <div style="font-family: var(--font-mono); font-size: 9px; color: rgba(255,255,255,0.35); letter-spacing: 0.1em; margin-bottom: 4px;">VOLUME</div>
+            <div style="font-family: var(--font-mono); font-size: 13px; color: rgba(255,255,255,0.7);">$42.8B</div>
+          </div>
+          <div>
+            <div style="font-family: var(--font-mono); font-size: 9px; color: rgba(255,255,255,0.35); letter-spacing: 0.1em; margin-bottom: 4px;">24H CHANGE</div>
+            <div style="font-family: var(--font-mono); font-size: 13px; color: var(--neon-lime); font-weight: 700;">▲ +2.84%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Book -->
+      <div class="card orderbook-card fade-up delay-3">
+        <div class="orderbook-title">
+          Order Book
+          <div class="live-indicator"><div class="live-dot"></div>LIVE</div>
+        </div>
+        <div class="ob-header">
+          <span>PRICE</span>
+          <span style="text-align:right">SIZE</span>
+          <span style="text-align:right">TOTAL</span>
+        </div>
+        <div id="asks-container"></div>
+        <div class="ob-spread">
+          <div class="ob-spread-pct">0.02%</div>
+          <div class="ob-spread-price" id="ob-mid-price">67,842</div>
+          <div class="ob-spread-pct">SPREAD</div>
+        </div>
+        <div id="bids-container"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="bottom-grid">
+      <div class="card activity-feed fade-up delay-3">
+        <div class="chart-title" style="margin-bottom: 16px;">⬡ Activity Feed</div>
+        <div id="activity-list"></div>
+      </div>
+      <div class="card alerts-card fade-up delay-4">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div class="chart-title">◈ Price Alerts</div>
+          <button class="btn btn-ghost" style="padding: 5px 10px; font-size: 9px;" onclick="showToast('✦ Alert created!', 'BTC above $70K')">+ ADD</button>
+        </div>
+        <div id="alerts-list"></div>
+      </div>
+      <div class="card top-movers fade-up delay-5">
+        <div class="chart-title" style="margin-bottom: 16px;">▲ Top Movers</div>
+        <div id="movers-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ DASHBOARD RIGHT SIDEBAR ═══════════════ -->
+  <div class="dashboard-right-sidebar" id="dashboard-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">⬡ BRAIN</div>
+      <div class="sidebar-subtitle">Neural Stats</div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">PORTFOLIO</div>
+      <div class="sidebar-stat-card">
+        <div class="sidebar-stat-icon">💰</div>
+        <div class="sidebar-stat-content">
+          <div class="sidebar-stat-label">Total Value</div>
+          <div class="sidebar-stat-value" id="sb-total-value">$84,219</div>
+          <div class="sidebar-stat-change up" id="sb-total-change">▲ +4.82%</div>
+        </div>
+      </div>
+      <div class="sidebar-stat-card">
+        <div class="sidebar-stat-icon">📈</div>
+        <div class="sidebar-stat-content">
+          <div class="sidebar-stat-label">24H Gain/Loss</div>
+          <div class="sidebar-stat-value text-up" id="sb-pnl-value">+$3,847</div>
+          <div class="sidebar-stat-change up" id="sb-pnl-change">▲ +4.79%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Market Stats -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">MARKET</div>
+      <div class="sidebar-stat-card">
+        <div class="sidebar-stat-icon">₿</div>
+        <div class="sidebar-stat-content">
+          <div class="sidebar-stat-label">BTC Price</div>
+          <div class="sidebar-stat-value" id="sb-btc-price">$67,842</div>
+          <div class="sidebar-stat-change up" id="sb-btc-change">▲ +2.84%</div>
+        </div>
+      </div>
+      <div class="sidebar-stat-card">
+        <div class="sidebar-stat-icon">⬡</div>
+        <div class="sidebar-stat-content">
+          <div class="sidebar-stat-label">ETH Price</div>
+          <div class="sidebar-stat-value" id="sb-eth-price">$3,542</div>
+          <div class="sidebar-stat-change up" id="sb-eth-change">▲ +1.92%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Stats -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">ACCOUNT</div>
+      <div class="sidebar-stat-card">
+        <div class="sidebar-stat-icon">🏆</div>
+        <div class="sidebar-stat-content">
+          <div class="sidebar-stat-label">Win Rate</div>
+          <div class="sidebar-stat-value" id="sb-win-rate">68.4%</div>
+          <div class="sidebar-stat-sub">2,841 trades</div>
+        </div>
+      </div>
+      <div class="sidebar-stat-card">
+        <div class="sidebar-stat-icon">📊</div>
+        <div class="sidebar-stat-content">
+          <div class="sidebar-stat-label">Holdings</div>
+          <div class="sidebar-stat-value" id="sb-holdings">5 assets</div>
+          <div class="sidebar-stat-sub" id="sb-holdings-value">$84.2K total</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="sidebar-section">
+      <button class="sidebar-action-btn" onclick="openQuickTrade()">⚡ QUICK TRADE</button>
+      <button class="sidebar-action-btn secondary" onclick="showPage('portfolio')">📈 PORTFOLIO</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ MARKETS ═══════════════ -->
+  <div class="page" id="page-markets">
+    <div class="page-header">
+      <div>
+        <div class="page-title"><div class="title-accent"></div>MARKETS</div>
+        <div class="page-subtitle">100+ ASSETS · NEURAL RANKED</div>
+      </div>
+      <div class="header-actions">
+        <div class="search-wrap">
+          <span class="search-icon">⊙</span>
+          <input class="search-input" type="text" placeholder="Search assets..." oninput="filterMarkets(this.value)" id="market-search">
+        </div>
+        <button class="btn btn-primary" onclick="showToast('◈ Watchlist', 'Sorting by watchlist')">⊛ WATCHLIST</button>
+      </div>
+    </div>
+    <div class="card markets-table-wrap">
+      <table class="markets-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th onclick="sortMarkets('name')">ASSET ⇅</th>
+            <th onclick="sortMarkets('price')">PRICE ⇅</th>
+            <th onclick="sortMarkets('change')">24H ⇅</th>
+            <th onclick="sortMarkets('volume')">VOLUME ⇅</th>
+            <th onclick="sortMarkets('mcap')">MARKET CAP ⇅</th>
+            <th>7D TREND</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="markets-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PORTFOLIO ═══════════════ -->
+  <div class="page" id="page-portfolio">
+    <div class="page-header">
+      <div>
+        <div class="page-title"><div class="title-accent"></div>PORTFOLIO</div>
+        <div class="page-subtitle">YOUR HOLDINGS · LIVE VALUATION</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost" onclick="showToast('⬡ Report', 'Generating portfolio report...')">↓ EXPORT</button>
+        <button class="btn btn-primary" onclick="showPage('trade')">+ REBALANCE</button>
+      </div>
+    </div>
+
+    <!-- Donut + Holdings -->
+    <div class="portfolio-grid">
+      <div class="card donut-wrap">
+        <div class="chart-title" style="margin-bottom: 20px; width: 100%;">◉ Allocation</div>
+        <div class="donut-chart" style="width:220px; height:220px; position:relative;">
+          <svg width="220" height="220" id="donut-svg"></svg>
+          <div class="donut-center">
+            <div class="donut-total-label">TOTAL VALUE</div>
+            <div class="donut-total-val">$84,219</div>
+          </div>
+        </div>
+        <div class="donut-legend" id="donut-legend"></div>
+      </div>
+      <div class="card holdings-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div class="chart-title">⬢ Holdings</div>
+          <div class="live-indicator"><div class="live-dot"></div>LIVE</div>
+        </div>
+        <div id="holdings-list"></div>
+      </div>
+    </div>
+
+    <!-- Performance Chart -->
+    <div class="card chart-card" style="padding:22px;">
+      <div class="chart-header">
+        <div class="chart-title">◷ Performance History</div>
+        <div class="chart-tabs">
+          <button class="chart-tab active">1M</button>
+          <button class="chart-tab">3M</button>
+          <button class="chart-tab">6M</button>
+          <button class="chart-tab">1Y</button>
+          <button class="chart-tab">ALL</button>
+        </div>
+      </div>
+      <svg width="100%" height="160" viewBox="0 0 700 160" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#00ff9d" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <line x1="0" y1="40" x2="700" y2="40" class="chart-grid-line"/>
+        <line x1="0" y1="80" x2="700" y2="80" class="chart-grid-line"/>
+        <line x1="0" y1="120" x2="700" y2="120" class="chart-grid-line"/>
+        <path d="M0,140 C50,130 100,115 150,100 C200,85 220,90 280,70 C340,50 380,60 440,40 C500,20 560,30 620,15 L700,10 L700,160 L0,160 Z"
+          fill="url(#perfGrad)"/>
+        <path d="M0,140 C50,130 100,115 150,100 C200,85 220,90 280,70 C340,50 380,60 440,40 C500,20 560,30 620,15 L700,10"
+          fill="none" stroke="#00ff9d" stroke-width="2"
+          style="filter: drop-shadow(0 0 6px #00ff9d88)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TRADE ═══════════════ -->
+  <div class="page" id="page-trade">
+    <div class="page-header">
+      <div>
+        <div class="page-title"><div class="title-accent"></div>TRADE</div>
+        <div class="page-subtitle">EXECUTE ORDERS · NEURAL ROUTING</div>
+      </div>
+      <div class="header-actions">
+        <div class="live-indicator"><div class="live-dot"></div>LIVE</div>
+      </div>
+    </div>
+
+    <div class="trade-pair-selector" id="trade-pairs"></div>
+
+    <div class="trade-layout">
+      <!-- Left: Chart -->
+      <div>
+        <div class="card chart-card" style="margin-bottom: 16px;">
+          <div class="chart-header">
+            <div class="chart-title" id="trade-chart-title">⬢ BTC / USDT</div>
+            <div class="chart-tabs">
+              <button class="chart-tab active">15M</button>
+              <button class="chart-tab">1H</button>
+              <button class="chart-tab">4H</button>
+              <button class="chart-tab">1D</button>
+            </div>
+          </div>
+          <svg width="100%" height="200" viewBox="0 0 600 200" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="tradeGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#c026d3" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <line x1="0" y1="50" x2="600" y2="50" class="chart-grid-line"/>
+            <line x1="0" y1="100" x2="600" y2="100" class="chart-grid-line"/>
+            <line x1="0" y1="150" x2="600" y2="150" class="chart-grid-line"/>
+            <path d="M0,180 C30,160 60,170 90,145 C120,120 140,130 180,100 C220,70 250,80 290,55 C330,30 360,40 400,20 C440,5 480,15 520,8 L600,5 L600,200 L0,200 Z"
+              fill="url(#tradeGrad)"/>
+            <path d="M0,180 C30,160 60,170 90,145 C120,120 140,130 180,100 C220,70 250,80 290,55 C330,30 360,40 400,20 C440,5 480,15 520,8 L600,5"
+              fill="none" stroke="#c026d3" stroke-width="2"
+              style="filter: drop-shadow(0 0 6px #c026d388)"/>
+          </svg>
+        </div>
+
+        <!-- Recent Trades -->
+        <div class="card" style="padding: 20px;">
+          <div class="chart-title" style="margin-bottom: 14px;">◷ Recent Fills</div>
+          <div id="recent-trades"></div>
+        </div>
+      </div>
+
+      <!-- Right: Trade Form -->
+      <div class="card trade-form">
+        <div class="trade-type-tabs">
+          <button class="trade-type-btn buy active" id="trade-buy-btn" onclick="setTradeType('buy')">BUY</button>
+          <button class="trade-type-btn sell" id="trade-sell-btn" onclick="setTradeType('sell')">SELL</button>
+        </div>
+
+        <div class="form-field">
+          <div class="form-label">Order Type</div>
+          <div class="order-type-select">
+            <button class="order-type-opt active" onclick="selectOrderType(this)">MARKET</button>
+            <button class="order-type-opt" onclick="selectOrderType(this)">LIMIT</button>
+            <button class="order-type-opt" onclick="selectOrderType(this)">STOP</button>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <div class="form-label">Amount <span id="balance-label">BAL: 2.4821 BTC</span></div>
+          <div class="input-suffix">
+            <input class="form-input" type="number" placeholder="0.00" id="trade-amount" oninput="updateSummary()">
+            <span class="suffix-label">BTC</span>
+          </div>
+          <div class="pct-buttons">
+            <button class="pct-btn" onclick="setPct(25)">25%</button>
+            <button class="pct-btn" onclick="setPct(50)">50%</button>
+            <button class="pct-btn" onclick="setPct(75)">75%</button>
+            <button class="pct-btn" onclick="setPct(100)">MAX</button>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <div class="form-label">Price <span>BEST: $67,842</span></div>
+          <div class="input-suffix">
+            <input class="form-input" type="number" placeholder="Market" id="trade-price" oninput="updateSummary()">
+            <span class="suffix-label">USDT</span>
+          </div>
+        </div>
+
+        <div class="trade-summary" id="trade-summary">
+          <div class="summary-row"><span class="summary-label">Total Value</span><span class="summary-val" id="sum-total">$0.00</span></div>
+          <div class="summary-row"><span class="summary-label">Fee (0.05%)</span><span class="summary-val" id="sum-fee">$0.00</span></div>
+          <div class="summary-row"><span class="summary-label">Est. Receive</span><span class="summary-val" id="sum-receive">— BTC</span></div>
+        </div>
+
+        <button class="execute-btn buy" id="execute-btn" onclick="executeTrade()">
+          ⬡ EXECUTE BUY ORDER
+        </button>
+
+        <div style="margin-top: 14px; font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,0.25); text-align: center; letter-spacing: 0.05em;">
+          NEURAL ROUTING · BEST EXECUTION · INSTANT SETTLEMENT
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ HISTORY ═══════════════ -->
+  <div class="page" id="page-history">
+    <div class="page-header">
+      <div>
+        <div class="page-title"><div class="title-accent"></div>HISTORY</div>
+        <div class="page-subtitle">COMPLETE TRANSACTION LEDGER</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost" onclick="showToast('⬡ Export', 'Downloading transaction history...')">↓ CSV EXPORT</button>
+      </div>
+    </div>
+
+    <div class="history-filters">
+      <button class="filter-btn active" onclick="filterHistory('all', this)">ALL</button>
+      <button class="filter-btn" onclick="filterHistory('buy', this)">BUYS</button>
+      <button class="filter-btn" onclick="filterHistory('sell', this)">SELLS</button>
+      <button class="filter-btn" onclick="filterHistory('transfer', this)">TRANSFERS</button>
+      <div style="flex:1;"></div>
+      <div class="search-wrap">
+        <span class="search-icon">⊙</span>
+        <input class="search-input" type="text" placeholder="Search history..." oninput="filterHistorySearch(this.value)">
+      </div>
+    </div>
+
+    <div class="card markets-table-wrap">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>TX ID</th>
+            <th>TYPE</th>
+            <th>ASSET</th>
+            <th>AMOUNT</th>
+            <th>PRICE</th>
+            <th>TOTAL</th>
+            <th>DATE</th>
+            <th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody id="history-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════ WATCHLIST ═══════════════ -->
+  <div class="page" id="page-watchlist">
+    <div class="page-header">
+      <div>
+        <div class="page-title"><div class="title-accent"></div>WATCHLIST</div>
+        <div class="page-subtitle">YOUR TRACKED ASSETS · LIVE PRICES</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="addToWatchlistPrompt()">+ ADD ASSET</button>
+      </div>
+    </div>
+    <div id="watchlist-content"></div>
+  </div>
+
+  <!-- ═══════════════ CONVERTER ═══════════════ -->
+  <div class="page" id="page-converter">
+    <div class="page-header">
+      <div>
+        <div class="page-title"><div class="title-accent"></div>CONVERTER</div>
+        <div class="page-subtitle">REAL-TIME CRYPTO CONVERSION</div>
+      </div>
+      <div class="header-actions">
+        <div class="live-indicator"><div class="live-dot"></div>LIVE RATES</div>
+      </div>
+    </div>
+    <div class="converter-wrap">
+      <div class="card converter-card">
+        <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; color:rgba(255,255,255,0.35); text-transform:uppercase; margin-bottom:14px; text-align:center;">Select asset pair</div>
+        <div class="coin-select-row" id="conv-from-row">
+          <div class="coin-pill active" onclick="selectConvCoin('from','BTC',67842,this)">₿ BTC</div>
+          <div class="coin-pill" onclick="selectConvCoin('from','ETH',3542,this)">⬡ ETH</div>
+          <div class="coin-pill" onclick="selectConvCoin('from','SOL',189.4,this)">◎ SOL</div>
+          <div class="coin-pill" onclick="selectConvCoin('from','BNB',608.2,this)">◈ BNB</div>
+          <div class="coin-pill" onclick="selectConvCoin('from','USDT',1,this)">$ USDT</div>
+        </div>
+
+        <div class="converter-row">
+          <div class="converter-input-group">
+            <input class="converter-input" id="conv-from-input" type="number" value="1" oninput="doConvert('from')">
+            <div class="converter-coin-badge">
+              <div class="badge-icon" id="conv-from-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b">₿</div>
+              <span id="conv-from-sym">BTC</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:center; margin: 4px 0;">
+          <button class="converter-swap-btn" onclick="swapConverter()" title="Swap currencies">⇅</button>
+        </div>
+
+        <div class="converter-row">
+          <div class="converter-input-group">
+            <input class="converter-input" id="conv-to-input" type="number" value="" oninput="doConvert('to')" placeholder="0.00">
+            <div class="converter-coin-badge">
+              <div class="badge-icon" id="conv-to-icon" style="background:rgba(0,212,255,0.15);color:#00d4ff">$</div>
+              <span id="conv-to-sym">USDT</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="coin-select-row" id="conv-to-row" style="margin-top:8px;">
+          <div class="coin-pill" onclick="selectConvCoin('to','BTC',67842,this)">₿ BTC</div>
+          <div class="coin-pill" onclick="selectConvCoin('to','ETH',3542,this)">⬡ ETH</div>
+          <div class="coin-pill" onclick="selectConvCoin('to','SOL',189.4,this)">◎ SOL</div>
+          <div class="coin-pill" onclick="selectConvCoin('to','BNB',608.2,this)">◈ BNB</div>
+          <div class="coin-pill active" onclick="selectConvCoin('to','USDT',1,this)">$ USDT</div>
+        </div>
+
+        <div class="converter-rate">
+          1 <span id="conv-rate-from-sym">BTC</span> = <span class="rate-value" id="conv-rate-val">$67,842</span> <span id="conv-rate-to-sym">USDT</span>
+        </div>
+
+        <div class="converter-stats" id="conv-stats">
+          <div class="conv-stat">
+            <div class="conv-stat-label">24H CHANGE</div>
+            <div class="conv-stat-val text-up" id="conv-24h">+2.84%</div>
+          </div>
+          <div class="conv-stat">
+            <div class="conv-stat-label">24H HIGH</div>
+            <div class="conv-stat-val" id="conv-high">$68,921</div>
+          </div>
+          <div class="conv-stat">
+            <div class="conv-stat-label">24H LOW</div>
+            <div class="conv-stat-val" id="conv-low">$65,412</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick amounts -->
+      <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+        <button class="btn btn-ghost" onclick="setConvAmount(0.001)">0.001</button>
+        <button class="btn btn-ghost" onclick="setConvAmount(0.01)">0.01</button>
+        <button class="btn btn-ghost" onclick="setConvAmount(0.1)">0.1</button>
+        <button class="btn btn-ghost" onclick="setConvAmount(1)">1</button>
+        <button class="btn btn-ghost" onclick="setConvAmount(10)">10</button>
+        <button class="btn btn-ghost" onclick="setConvAmount(100)">100</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ NEWS FEED ═══════════════ -->
+  <div class="page" id="page-news">
+    <div class="page-header">
+      <div>
+        <div class="page-title"><div class="title-accent"></div>NEWS FEED</div>
+        <div class="page-subtitle">NEURAL-CURATED MARKET INTELLIGENCE</div>
+      </div>
+      <div class="header-actions">
+        <div class="live-indicator"><div class="live-dot"></div>LIVE</div>
+        <button class="btn btn-ghost" onclick="refreshNews()">↻ REFRESH</button>
+      </div>
+    </div>
+    <div class="news-grid">
+      <div class="news-list" id="news-list"></div>
+      <div class="news-sidebar">
+        <div class="card" style="padding:20px;">
+          <div class="chart-title" style="margin-bottom:16px;">◈ Trending Tags</div>
+          <div id="trending-tags" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
+        </div>
+        <div class="card sentiment-bar-wrap">
+          <div class="chart-title" style="margin-bottom:14px;">◉ Market Sentiment</div>
+          <div style="display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:rgba(255,255,255,0.4); margin-bottom:4px;">
+            <span>BULLISH</span><span>BEARISH</span>
+          </div>
+          <div class="sentiment-bar">
+            <div class="sentiment-bull" id="sent-bull" style="width:67%"></div>
+            <div class="sentiment-bear" id="sent-bear" style="width:33%"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:12px; font-weight:700;">
+            <span class="text-up" id="sent-bull-pct">67%</span>
+            <span class="text-down" id="sent-bear-pct">33%</span>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:10px; color:rgba(255,255,255,0.3); text-align:center; margin-top:10px;">
+            Based on 24,891 signals · Updated 4 min ago
+          </div>
+        </div>
+        <div class="card" style="padding:20px;">
+          <div class="chart-title" style="margin-bottom:14px;">⬡ Fear & Greed</div>
+          <div style="text-align:center; padding:10px 0;">
+            <div style="font-family:var(--font-display); font-size:52px; font-weight:900; color:var(--neon-amber); filter:drop-shadow(0 0 16px rgba(245,158,11,0.5));">72</div>
+            <div style="font-family:var(--font-mono); font-size:14px; color:var(--neon-amber); font-weight:700; letter-spacing:0.1em;">GREED</div>
+            <div style="font-family:var(--font-mono); font-size:10px; color:rgba(255,255,255,0.3); margin-top:6px;">Previous: 68 · Neutral</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SETTINGS ═══════════════ -->
+  <div class="page" id="page-settings">
+    <div class="page-header">
+      <div>
+        <div class="page-title"><div class="title-accent"></div>SETTINGS</div>
+        <div class="page-subtitle">SYSTEM CONFIGURATION · NEURAL PREFERENCES</div>
+      </div>
+    </div>
+
+    <div class="settings-grid">
+      <div class="card settings-nav">
+        <button class="settings-nav-btn active" onclick="switchSettings('profile', this)">⬡ Profile</button>
+        <button class="settings-nav-btn" onclick="switchSettings('security', this)">◉ Security</button>
+        <button class="settings-nav-btn" onclick="switchSettings('notifications', this)">◷ Notifications</button>
+        <button class="settings-nav-btn" onclick="switchSettings('appearance', this)">◈ Appearance</button>
+        <button class="settings-nav-btn" onclick="switchSettings('api', this)">⊛ API Keys</button>
+      </div>
+
+      <div class="card settings-content" id="settings-content">
+        <!-- Profile Section (default) -->
+        <div class="settings-section">
+          <div class="settings-section-title">IDENTITY</div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Display Name</div>
+              <div class="setting-desc">Shown in your profile and reports</div>
+            </div>
+            <input class="form-input" style="width: 200px; font-size:13px; padding: 8px 12px;" value="Nexus Trader" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Email Address</div>
+              <div class="setting-desc">Used for alerts and authentication</div>
+            </div>
+            <input class="form-input" style="width: 220px; font-size:13px; padding: 8px 12px;" value="trader@nexus.io" />
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">PREFERENCES</div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Neural Interface Mode</div>
+              <div class="setting-desc">Advanced animations and particle effects</div>
+            </div>
+            <div class="toggle-switch on" onclick="this.classList.toggle('on'); showToast('⊛ Setting saved', 'Neural mode updated')">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Sound Effects</div>
+              <div class="setting-desc">Audio feedback on trades and alerts</div>
+            </div>
+            <div class="toggle-switch" onclick="this.classList.toggle('on'); showToast('⊛ Setting saved', 'Sound effects updated')">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Accentuate Color</div>
+              <div class="setting-desc">Primary interface accent color</div>
+            </div>
+            <div class="color-selector">
+              <div class="color-dot active" style="background:#00d4ff;" onclick="setAccent('#00d4ff', this)"></div>
+              <div class="color-dot" style="background:#00ff9d;" onclick="setAccent('#00ff9d', this)"></div>
+              <div class="color-dot" style="background:#c026d3;" onclick="setAccent('#c026d3', this)"></div>
+              <div class="color-dot" style="background:#f59e0b;" onclick="setAccent('#f59e0b', this)"></div>
+              <div class="color-dot" style="background:#ff2d78;" onclick="setAccent('#ff2d78', this)"></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-primary" onclick="showToast('✦ Saved!', 'Settings updated successfully')">SAVE CHANGES</button>
+          <button class="btn btn-ghost" onclick="showToast('↺ Reset', 'Settings restored to defaults')">RESET DEFAULTS</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Notification Panel -->
+<div id="notif-panel" style="
+  position:fixed; top:64px; right:24px; z-index:5000;
+  width:340px; background:rgba(8,8,18,0.98);
+  border:1px solid rgba(0,212,255,0.2); border-radius:16px;
+  backdrop-filter:blur(30px); box-shadow:0 16px 60px rgba(0,0,0,0.6);
+  display:none; overflow:hidden;
+  animation: pageIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+">
+  <div style="padding:16px 20px; border-bottom:1px solid rgba(0,212,255,0.08); display:flex; justify-content:space-between; align-items:center;">
+    <div style="font-family:var(--font-display); font-size:12px; letter-spacing:0.1em; color:#fff;">NOTIFICATIONS</div>
+    <button onclick="clearNotifications()" style="font-family:var(--font-mono);font-size:10px;color:rgba(0,212,255,0.6);background:none;border:none;cursor:pointer;letter-spacing:0.06em;">CLEAR ALL</button>
+  </div>
+  <div id="notif-list" style="max-height:360px; overflow-y:auto;"></div>
+  <div style="padding:12px 20px; border-top:1px solid rgba(0,212,255,0.06); text-align:center;">
+    <button onclick="toggleNotifPanel()" style="font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.3);background:none;border:none;cursor:pointer;">CLOSE</button>
+  </div>
+</div>
+
+<!-- Quick Trade Modal -->
+<div id="quick-modal" style="
+  position:fixed; inset:0; z-index:8000;
+  background:rgba(0,0,0,0.7); backdrop-filter:blur(8px);
+  display:none; align-items:center; justify-content:center;
+">
+  <div style="
+    width:420px; background:rgba(8,8,20,0.98);
+    border:1px solid rgba(0,212,255,0.2); border-radius:20px;
+    padding:28px; backdrop-filter:blur(40px);
+    box-shadow:0 0 80px rgba(0,212,255,0.08), 0 32px 80px rgba(0,0,0,0.6);
+    animation:authCardIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  ">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:#fff;letter-spacing:0.06em;">⚡ QUICK TRADE</div>
+      <button onclick="closeQuickTrade()" style="color:rgba(255,255,255,0.3);background:none;border:none;font-size:22px;cursor:pointer;line-height:1;">×</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
+      <button class="execute-btn buy" style="padding:12px;font-size:11px;" id="qt-buy-btn" onclick="setQTType('buy')">BUY</button>
+      <button class="execute-btn sell" style="padding:12px;font-size:11px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.4);box-shadow:none;" id="qt-sell-btn" onclick="setQTType('sell')">SELL</button>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;margin-bottom:8px;text-transform:uppercase;">Asset</div>
+      <select id="qt-asset" style="width:100%;padding:12px;background:rgba(0,0,0,0.5);border:1px solid rgba(0,212,255,0.15);border-radius:8px;color:#fff;font-family:var(--font-mono);font-size:13px;outline:none;">
+      </select>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;margin-bottom:8px;text-transform:uppercase;">Amount (USD)</div>
+      <input id="qt-amount" class="form-input" type="number" placeholder="0.00" style="font-size:20px;">
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:20px;">
+      <button class="pct-btn" onclick="document.getElementById('qt-amount').value=100">$100</button>
+      <button class="pct-btn" onclick="document.getElementById('qt-amount').value=500">$500</button>
+      <button class="pct-btn" onclick="document.getElementById('qt-amount').value=1000">$1K</button>
+      <button class="pct-btn" onclick="document.getElementById('qt-amount').value=5000">$5K</button>
+    </div>
+
+    <button class="execute-btn buy" id="qt-execute" onclick="executeQuickTrade()" style="width:100%;font-size:13px;">
+      ⚡ EXECUTE BUY
+    </button>
+
+    <div style="font-family:var(--font-mono);font-size:9px;color:rgba(255,255,255,0.2);text-align:center;margin-top:12px;letter-spacing:0.06em;">
+      KEYBOARD SHORTCUT: ESC TO CLOSE · ENTER TO CONFIRM
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<script src="script.js" defer></script>
+</body>
+</html>
